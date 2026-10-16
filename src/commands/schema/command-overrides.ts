@@ -45,7 +45,7 @@ const SCHEMA_ONLY_CLI_COMMAND_SCHEMAS = {
   },
   daemon: {
     text: {
-      summary: 'Stop a local daemon and remove its retained resources',
+      summary: 'Stop a local daemon and clean up resources',
       description:
         'Stop a local daemon after the command confirms its PID and start-time identity. To remove retained Apple runner processes and leases that the daemon owns, use --clean.',
     },
