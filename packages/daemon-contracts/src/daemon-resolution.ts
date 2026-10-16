@@ -77,6 +77,11 @@ function resolveRealPath(filePath: string): string {
   }
 }
 
+/** The transport a daemon recorded in `daemon.json`; anything else is no recorded transport. */
+export function readRecordedDaemonTransport(value: unknown): DaemonServerMode | undefined {
+  return value === 'socket' || value === 'http' || value === 'dual' ? value : undefined;
+}
+
 export function resolveDaemonServerMode(raw: string | undefined): DaemonServerMode {
   const normalized = (raw ?? '').trim().toLowerCase();
   if (normalized === 'http') return 'http';

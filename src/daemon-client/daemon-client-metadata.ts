@@ -4,6 +4,7 @@ import { isProcessPid } from '@agent-device/host-kit/process';
 import type { DaemonCodeOrigin } from '@agent-device/host-kit/code-signature';
 
 import {
+  readRecordedDaemonTransport,
   resolveDaemonPaths,
   type DaemonPaths,
   type DaemonServerMode,
@@ -44,7 +45,7 @@ export function readDaemonInfo(infoPath: string): DaemonInfo | null {
   return {
     token,
     ...ports,
-    transport: readDaemonInfoTransport(parsed.transport),
+    transport: readRecordedDaemonTransport(parsed.transport),
     pid: isProcessPid(parsed.pid) ? parsed.pid : 0,
     version: readOptionalString(parsed.version),
     codeOrigin: readDaemonInfoCodeOrigin(parsed.codeOrigin),
@@ -70,10 +71,6 @@ function readDaemonInfoPorts(
 
 function readDaemonInfoCodeOrigin(value: unknown): DaemonInfo['codeOrigin'] {
   return value === 'installed' || value === 'checkout' ? value : undefined;
-}
-
-function readDaemonInfoTransport(value: unknown): DaemonInfo['transport'] {
-  return value === 'socket' || value === 'http' || value === 'dual' ? value : undefined;
 }
 
 function readOptionalString(value: unknown): string | undefined {
