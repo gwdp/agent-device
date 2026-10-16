@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `@agent-device/testmu` is now a version 2 provider plugin. `import testmu from '@agent-device/testmu'` gives a factory, `testmu({ credentials: { username, accessKey } })`, that reads those credentials instead of `LT_USERNAME` and `LT_ACCESS_KEY`; without options it reads the variables as before. The package still declares the version 1 plugin entry, so `agent-device plugins add @agent-device/testmu` keeps working on hosts that predate the version 2 contract.
 - Provider plugins have a new contract. A package exports a factory at `./agent-device` that returns `{ apiVersion: 2, provider, credentials, connection?, setup(host) }`, typed by `AgentDevicePluginFactory` from `agent-device/plugins`. The store calls the factory with the package's `config.json` options, and a JavaScript host can call it directly. Version 1 plugins (`agentDevicePlugin.apiVersion: 1`) keep loading.
 - Bundled providers, installed plugins, and embedder plugins now register through one registry, in that order. The first plugin to name a provider id claims it; a later duplicate is recorded as failed, and `cloud` and `proxy` stay reserved.
 - A plugin that fails to load, validate, or set up no longer stops the daemon. It is listed as `failed` with a typed `error.reason`, and the other providers still register. The new `agent-device daemon status [--json]` shows the inventory, which the daemon also publishes in `daemon.json`; `plugins list --json` works without a daemon and reports a running daemon's inventory under `daemon`.
