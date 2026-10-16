@@ -37,6 +37,13 @@ export {
 } from './dispatch-disclosure.fixtures.ts';
 export { restoreEnv } from './env.ts';
 export {
+  laneEnvelope,
+  LANE_ENVELOPE_SCHEMA_VERSION,
+  type LaneEnvelope,
+  type LaneEnvelopeInput,
+  type LaneResult,
+} from './lane-envelope.ts';
+export {
   type FilesystemBoundaryFixture,
   type FilesystemBoundaryOwner,
   type FilesystemErrno,
