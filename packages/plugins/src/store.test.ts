@@ -3,15 +3,34 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, test, vi } from 'vitest';
 import { runCmd } from '@agent-device/host-kit/command';
-import { changePlugin, installedPlugins, listPlugins } from './store.ts';
-import { pluginHome, selectPlugin, writePlugin } from '@agent-device/test-kit';
+import { changePlugin, legacyStoreManifests, listPlugins } from './store.ts';
+import {
+  pluginHome,
+  selectPlugin,
+  selectV2Plugin,
+  v2RegistrationSource,
+  writePlugin,
+} from '@agent-device/test-kit';
 
 vi.mock('@agent-device/host-kit/command', () => ({ runCmd: vi.fn() }));
 afterEach(() => vi.mocked(runCmd).mockReset());
 
 const packageName = '@example/provider';
 function readPluginConfig(env: NodeJS.ProcessEnv) {
-  return JSON.parse(fs.readFileSync(path.join(env.AGENT_DEVICE_HOME!, 'config.json'), 'utf8'));
+  const file = path.join(env.AGENT_DEVICE_HOME!, 'config.json');
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
+}
+
+function installedPlugins(env: NodeJS.ProcessEnv) {
+  const home = env.AGENT_DEVICE_HOME!;
+  return Object.entries(readPluginConfig(env).plugins ?? {}).map(([name, selection]) => {
+    const { installation, options } = selection as { installation: string; options?: unknown };
+    return {
+      name,
+      selection: { installation, options },
+      directory: path.join(home, 'plugins', installation, 'node_modules', name),
+    };
+  });
 }
 
 function installFixture(name = packageName, apiVersion = 1, provider = 'example') {
@@ -31,13 +50,13 @@ test('add, pinned update and remove preserve flags, options and old installation
   const { home, env } = pluginHome();
   fs.writeFileSync(path.join(home, 'config.json'), JSON.stringify({ platform: 'android' }));
   installFixture();
-  await changePlugin('add', `${packageName}@1.2.3`, env);
+  await changePlugin('add', `${packageName}@1.2.3`, env, []);
   const [first] = installedPlugins(env);
   const config = readPluginConfig(env);
   config.plugins![packageName]!.options = { region: 'eu' };
   config.plugins![packageName]!.installation = '../damaged';
   fs.writeFileSync(path.join(home, 'config.json'), JSON.stringify(config));
-  await changePlugin('update', packageName, env);
+  await changePlugin('update', packageName, env, []);
   const [second] = installedPlugins(env);
   assert.notEqual(first!.directory, second!.directory);
   assert.deepEqual(second!.selection.options, { region: 'eu' });
@@ -47,7 +66,7 @@ test('add, pinned update and remove preserve flags, options and old installation
     { [packageName]: '1.2.3' },
   );
   assert.equal(readPluginConfig(env).platform, 'android');
-  await changePlugin('remove', packageName, env);
+  await changePlugin('remove', packageName, env, []);
   assert.deepEqual(installedPlugins(env), []);
   assert.ok(fs.existsSync(first!.directory));
   assert.ok(fs.existsSync(second!.directory));
@@ -56,13 +75,13 @@ test('add, pinned update and remove preserve flags, options and old installation
 test('failed npm install and incompatible replacement preserve the active selection', async () => {
   const { home, env } = pluginHome();
   installFixture();
-  await changePlugin('add', packageName, env);
+  await changePlugin('add', packageName, env, []);
   const before = fs.readFileSync(path.join(home, 'config.json'), 'utf8');
   vi.mocked(runCmd).mockRejectedValue(new Error('npm failed'));
-  await assert.rejects(changePlugin('update', packageName, env), /npm failed/);
+  await assert.rejects(changePlugin('update', packageName, env, []), /npm failed/);
   assert.equal(fs.readFileSync(path.join(home, 'config.json'), 'utf8'), before);
   installFixture(packageName, 2);
-  await assert.rejects(changePlugin('update', packageName, env), { code: 'INVALID_ARGS' });
+  await assert.rejects(changePlugin('update', packageName, env, []), { code: 'INVALID_ARGS' });
   assert.equal(fs.readFileSync(path.join(home, 'config.json'), 'utf8'), before);
   assert.equal(fs.readdirSync(path.join(home, 'plugins')).length, 1);
 });
@@ -77,7 +96,10 @@ test('concurrent additions serialize without dropping the other package', async 
     writePlugin(options!.cwd!, name, 1, name);
     return { stdout: '', stderr: '', exitCode: 0 };
   });
-  await Promise.all([changePlugin('add', 'constructor', env), changePlugin('add', 'two', env)]);
+  await Promise.all([
+    changePlugin('add', 'constructor', env, []),
+    changePlugin('add', 'two', env, []),
+  ]);
   assert.deepEqual(
     installedPlugins(env)
       .map(({ name }) => name)
@@ -95,22 +117,21 @@ test('invalid package sources and damaged selections fail before invoking npm', 
     'plugin@npm:other',
     'https://example.com/plugin',
   ]) {
-    await assert.rejects(changePlugin('add', name, env), { code: 'INVALID_ARGS' });
+    await assert.rejects(changePlugin('add', name, env, []), { code: 'INVALID_ARGS' });
   }
   fs.writeFileSync(
     path.join(home, 'config.json'),
     JSON.stringify({ plugins: { one: { installation: '../other' } } }),
   );
-  assert.throws(() => installedPlugins(env), { code: 'INVALID_ARGS' });
-  assert.equal(listPlugins(env)[0]?.compatible, false);
-  await changePlugin('remove', 'one', env);
-  assert.deepEqual(listPlugins(env), []);
+  assert.equal((await listPlugins(env, []))[0]?.compatible, false);
+  await changePlugin('remove', 'one', env, []);
+  assert.deepEqual(await listPlugins(env, []), []);
   fs.writeFileSync(
     path.join(home, 'config.json'),
     JSON.stringify({ plugins: { UPPERCASE: null } }),
   );
-  await changePlugin('remove', 'UPPERCASE', env);
-  assert.deepEqual(listPlugins(env), []);
+  await changePlugin('remove', 'UPPERCASE', env, []);
+  assert.deepEqual(await listPlugins(env, []), []);
   assert.equal(vi.mocked(runCmd).mock.calls.length, 0);
 });
 
@@ -121,9 +142,9 @@ test('provider collisions refuse activation and preserve existing selections', a
     code: 'INVALID_ARGS',
   });
   assert.deepEqual(installedPlugins(env), []);
-  await changePlugin('add', packageName, env);
+  await changePlugin('add', packageName, env, []);
   installFixture('other');
-  await assert.rejects(changePlugin('add', 'other', env), { code: 'INVALID_ARGS' });
+  await assert.rejects(changePlugin('add', 'other', env, []), { code: 'INVALID_ARGS' });
   assert.equal(installedPlugins(env).length, 1);
 });
 
@@ -131,7 +152,7 @@ test('broken siblings do not block pinned updates or unrelated additions', async
   for (const damage of ['missing', 'json', 'abi']) {
     const { home, env } = pluginHome();
     installFixture();
-    await changePlugin('add', `${packageName}@1.2.3`, env);
+    await changePlugin('add', `${packageName}@1.2.3`, env, []);
     selectPlugin(home, 'broken', 'broken', 'throw new Error("must not evaluate");', 2);
     const config = readPluginConfig(env);
     config.plugins![packageName]!.options = { region: 'eu' };
@@ -140,13 +161,46 @@ test('broken siblings do not block pinned updates or unrelated additions', async
     if (damage === 'missing') fs.rmSync(directory, { recursive: true });
     if (damage === 'json')
       fs.writeFileSync(path.join(directory, 'node_modules/broken/package.json'), '{');
-    await changePlugin('update', packageName, env);
+    await changePlugin('update', packageName, env, []);
     const repaired = readPluginConfig(env).plugins![packageName]!;
     assert.deepEqual(repaired.options, { region: 'eu' });
     assert.equal(repaired.version, '1.2.3');
     assert.deepEqual(readPluginConfig(env).plugins!.broken, config.plugins!.broken);
     installFixture('other', 1, 'other');
-    await changePlugin('add', 'other', env);
-    assert.throws(() => installedPlugins(env), { code: 'INVALID_ARGS' });
+    await changePlugin('add', 'other', env, []);
+    const listed = await listPlugins(env, []);
+    assert.deepEqual(
+      listed.map(({ name, compatible }) => [name, compatible]),
+      [
+        ['@example/provider', true],
+        ['broken', false],
+        ['other', true],
+      ],
+    );
   }
+});
+
+test('a package that declares the v1 manifest and exports ./agent-device still supplies its manifest', () => {
+  const { home, env } = pluginHome();
+  const directory = selectV2Plugin(home, 'dual', v2RegistrationSource('dual'), {
+    manifest: {
+      agentDevicePlugin: {
+        apiVersion: 1,
+        provider: 'dual',
+        entry: './plugin.mjs',
+        credentialVariables: ['DUAL_KEY'],
+      },
+    },
+  });
+  selectV2Plugin(home, 'v2-only', v2RegistrationSource('v2-only'));
+  assert.deepEqual(
+    legacyStoreManifests(env).map((manifest) => manifest.agentDevicePlugin.credentialVariables),
+    [['DUAL_KEY']],
+  );
+
+  // An installation that holds another package supplies nothing under this selection's name.
+  const manifestPath = path.join(directory, 'package.json');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  fs.writeFileSync(manifestPath, JSON.stringify({ ...manifest, name: 'someone-else' }));
+  assert.deepEqual(legacyStoreManifests(env), []);
 });

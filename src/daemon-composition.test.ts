@@ -28,8 +28,13 @@ vi.mock('./platform-runtime.ts', () => ({
 }));
 
 vi.mock('./provider-device-runtimes.ts', () => ({
-  DEFAULT_PROVIDER_RUNTIME_REQUIRED_IDS: [],
-  createDaemonProviderRuntimeComposition: async () => ({ runtimes: [], platformModules: [] }),
+  createDaemonProviderRuntimeComposition: async () => ({
+    runtimes: [],
+    platformModules: [],
+    claimedProviders: [],
+    shutdown: async () => {},
+    inventory: [],
+  }),
 }));
 
 afterEach(() => {

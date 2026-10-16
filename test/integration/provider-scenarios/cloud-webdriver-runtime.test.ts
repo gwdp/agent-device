@@ -8,7 +8,7 @@ import {
   markRequestCanceled,
   registerRequestAbort,
 } from '@agent-device/host-kit/request';
-import { createBundledCloudWebDriverRuntimes } from '@agent-device/provider-webdriver';
+import { createBundledCloudWebDriverRuntimes } from './bundled-cloud-webdriver-runtimes.ts';
 import type { CloudArtifact } from '@agent-device/contracts/observability';
 import type { DeviceLease } from '@agent-device/contracts/device';
 import { createProviderDeviceRuntimeRequestProviders } from '../../../src/provider-device-runtime.ts';
@@ -292,7 +292,7 @@ async function waitForSourceRequest(server: FakeWebDriverServer): Promise<void> 
 
 async function createCloudWebDriverWorld() {
   const server = await FakeWebDriverServer.start();
-  const runtimes = createBundledCloudWebDriverRuntimes({
+  const runtimes = await createBundledCloudWebDriverRuntimes({
     env: {
       BROWSERSTACK_USERNAME: 'browser-user',
       BROWSERSTACK_ACCESS_KEY: 'browser-key',

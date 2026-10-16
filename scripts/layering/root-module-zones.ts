@@ -30,6 +30,8 @@ export const ROOT_MODULE_ZONES: Readonly<Record<string, readonly string[]>> = {
   // construction, which names these same runtime families and keeps the same value-free direction
   // toward `packages/daemon/src/` (PR 6 of #3276's daemon extraction).
   'platform-runtime': [
+    'src/builtin-provider-ids.ts',
+    'src/builtin-provider-plugins.ts',
     'src/daemon-composition.ts',
     'src/platform-runtime-android-mechanics.ts',
     'src/platform-runtime-android-observation-host.ts',
@@ -51,6 +53,7 @@ export const ROOT_MODULE_ZONES: Readonly<Record<string, readonly string[]>> = {
     'src/provider-credential-fingerprint.ts',
     'src/provider-device-runtimes.ts',
     'src/provider-limrun-credentials.ts',
+    'src/provider-plugin-policy.ts',
     'src/provider-webdriver.ts',
   ],
   // The operation host the platform runtime loads through `import()` (`loadHost`) and its facets.

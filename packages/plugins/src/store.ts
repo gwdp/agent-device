@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { AppError, normalizeError } from '@agent-device/kernel/errors';
+import { pathToFileURL } from 'node:url';
+import { AppError } from '@agent-device/kernel/errors';
 import { isRecord } from '@agent-device/kernel/record';
 import { runCmd } from '@agent-device/host-kit/command';
 import {
@@ -11,10 +12,14 @@ import {
 } from '@agent-device/host-kit/file';
 import { readCurrentOwnerIdentity } from '@agent-device/host-kit/process';
 import {
+  discoverPluginEntry,
+  readPackageJson,
   readPluginManifest,
-  assertUniquePluginProviders,
-  RESERVED_PLUGIN_PROVIDERS,
+  ROUTING_PROVIDER_IDENTITIES,
+  type PluginManifest,
+  type PluginPackageEntry,
 } from './manifest.ts';
+import type { PluginCandidate } from './registry.ts';
 
 type PluginSelection = {
   installation: string;
@@ -50,37 +55,155 @@ function validatePluginSelection(name: string, selection: PluginSelection): void
   }
 }
 
-export function installedPlugins(env: NodeJS.ProcessEnv) {
-  const home = path.dirname(resolveUserConfigPath(env));
-  return Object.entries(readPluginConfig(env).plugins ?? {}).map(([name, selection]) =>
-    readInstallation(home, name, selection),
-  );
+type StoreInstallation = {
+  name: string;
+  version: string;
+  directory: string;
+  selection: PluginSelection;
+  entry: PluginPackageEntry;
+};
+
+function storeHome(env: NodeJS.ProcessEnv): string {
+  return path.dirname(resolveUserConfigPath(env));
+}
+
+function installationDirectory(home: string, name: string, installation: string): string {
+  return path.join(home, 'plugins', installation, 'node_modules', name);
+}
+
+function describeInstallation(
+  name: string,
+  directory: string,
+  selection: PluginSelection,
+): StoreInstallation {
+  const packageJson = readPackageJson(directory);
+  if (packageJson.name !== name)
+    throw new AppError('INVALID_ARGS', `Plugin package identity mismatch: ${name}`);
+  const version = typeof packageJson.version === 'string' ? packageJson.version : undefined;
+  if (version === undefined) {
+    throw new AppError('INVALID_ARGS', `Plugin package has no version: ${name}`, {
+      reason: 'invalid_plugin',
+    });
+  }
+  return { name, version, directory, selection, entry: discoverPluginEntry(directory) };
 }
 
 function readInstallation(home: string, name: string, selection: PluginSelection) {
   validatePluginSelection(name, selection);
-  const directory = path.join(home, 'plugins', selection.installation, 'node_modules', name);
-  const manifest = readPluginManifest(directory);
-  if (manifest.name !== name)
-    throw new AppError('INVALID_ARGS', `Plugin package identity mismatch: ${name}`);
-  return { ...manifest, directory, selection };
+  return describeInstallation(
+    name,
+    installationDirectory(home, name, selection.installation),
+    selection,
+  );
 }
 
-export function listPlugins(env: NodeJS.ProcessEnv) {
-  const home = path.dirname(resolveUserConfigPath(env));
-  return Object.entries(readPluginConfig(env).plugins ?? {}).map(([name, selection]) => {
+async function loadInstallation({ name, directory, selection, entry }: StoreInstallation) {
+  if (entry.kind === 'v1') {
+    const { adaptLegacyPlugin } = await import('./legacy.ts');
+    return adaptLegacyPlugin(entry.manifest, directory, selection.options);
+  }
+  const module = await import(pathToFileURL(entry.file).href);
+  if (typeof module.default !== 'function')
+    throw new AppError('INVALID_ARGS', `Plugin must export a default factory: ${name}`, {
+      reason: 'invalid_plugin',
+    });
+  return await module.default(selection.options);
+}
+
+/**
+ * The store's contribution to the provider registry, in package-name order. Nothing here runs
+ * plugin code: a selection or package that cannot be read becomes a candidate that fails when
+ * loaded, so one damaged installation never hides the others.
+ */
+export function storePluginCandidates(env: NodeJS.ProcessEnv): PluginCandidate[] {
+  const home = storeHome(env);
+  let selections: [string, PluginSelection][];
+  try {
+    selections = Object.entries(readPluginConfig(env).plugins ?? {});
+  } catch (error) {
+    return [{ source: 'store', load: () => Promise.reject(error) }];
+  }
+  return selections
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([name, selection]) => {
+      try {
+        const installation = readInstallation(home, name, selection);
+        return {
+          source: 'store',
+          package: name,
+          version: installation.version,
+          ...(installation.entry.kind === 'v1'
+            ? { provider: installation.entry.manifest.agentDevicePlugin.provider }
+            : {}),
+          ...(selection.options ? { hostOptions: selection.options } : {}),
+          load: () => loadInstallation(installation),
+        } satisfies PluginCandidate;
+      } catch (error) {
+        return {
+          source: 'store',
+          package: name,
+          ...readSelectionVersion(home, name, selection),
+          load: () => Promise.reject(error),
+        } satisfies PluginCandidate;
+      }
+    });
+}
+
+// Only a selection that passed validation names a directory this process may read.
+function readSelectionVersion(
+  home: string,
+  name: string,
+  selection: PluginSelection,
+): { version?: string } {
+  try {
+    validatePluginSelection(name, selection);
+    const version = readPackageJson(
+      installationDirectory(home, name, selection.installation),
+    ).version;
+    return typeof version === 'string' ? { version } : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * The v1 manifests in the store, read without executing anything, including those of a package
+ * that also exports `./agent-device`; unreadable selections are skipped.
+ */
+export function legacyStoreManifests(env: NodeJS.ProcessEnv): PluginManifest[] {
+  const home = storeHome(env);
+  let selections: [string, PluginSelection][];
+  try {
+    selections = Object.entries(readPluginConfig(env).plugins ?? {});
+  } catch {
+    return [];
+  }
+  return selections.flatMap(([name, selection]) => {
     try {
-      const manifest = readInstallation(home, name, selection);
-      return {
-        name,
-        version: manifest.version,
-        provider: manifest.agentDevicePlugin.provider,
-        compatible: true,
-      };
-    } catch (error) {
-      return { name, compatible: false, error: normalizeError(error) };
+      validatePluginSelection(name, selection);
+      const manifest = readPluginManifest(
+        installationDirectory(home, name, selection.installation),
+      );
+      return manifest.name === name ? [manifest] : [];
+    } catch {
+      return [];
     }
   });
+}
+
+export async function listPlugins(env: NodeJS.ProcessEnv, builtinProviders: readonly string[]) {
+  const { claimProviderIds, resolveProviderPlugins } = await import('./registry.ts');
+  const resolved = await resolveProviderPlugins([
+    ...claimProviderIds(builtinProviders),
+    ...storePluginCandidates(env),
+  ]);
+  return resolved.inventory().map((entry) => ({
+    name: entry.package,
+    ...(entry.version !== undefined ? { version: entry.version } : {}),
+    ...(entry.provider !== undefined ? { provider: entry.provider } : {}),
+    compatible: entry.state === 'active',
+    ...(entry.error ? { error: entry.error } : {}),
+  }));
 }
 
 type PluginAction = 'add' | 'update' | 'remove';
@@ -129,10 +252,10 @@ async function stagePlugin(
       ],
       { cwd: project, env, timeoutMs: 120_000 },
     );
-    const manifest = readPluginManifest(path.join(project, 'node_modules', name));
-    if (manifest.name !== name)
-      throw new AppError('INVALID_ARGS', `Plugin package identity mismatch: ${name}`);
-    return { installation, project, manifest };
+    const staged = describeInstallation(name, installationDirectory(home, name, installation), {
+      installation,
+    });
+    return { installation, project, entry: staged.entry };
   } catch (error) {
     fs.rmSync(project, { recursive: true, force: true });
     throw error;
@@ -143,7 +266,7 @@ export async function changePlugin(
   action: PluginAction,
   input: string,
   env: NodeJS.ProcessEnv = process.env,
-  reservedProviders: readonly string[] = RESERVED_PLUGIN_PROVIDERS,
+  reservedProviders: readonly string[],
 ): Promise<void> {
   const { name, version } = parsePluginRequest(action, input);
   const configPath = resolveUserConfigPath(env);
@@ -166,16 +289,13 @@ export async function changePlugin(
       const requested =
         action === 'update' && isVersionSelector(previous?.version) ? previous.version : version;
       staged = await stagePlugin(home, name, requested, env);
-      const siblings = Object.entries(selections)
-        .filter(([other]) => other !== name)
-        .flatMap(([other, selection]) => {
-          try {
-            return [readInstallation(home, other, selection)];
-          } catch {
-            return [];
-          }
-        });
-      assertUniquePluginProviders([...siblings, staged.manifest], reservedProviders);
+      assertUniqueLegacyProviders(
+        [
+          ...legacyStoreManifests(env).filter((manifest) => manifest.name !== name),
+          ...(staged.entry.kind === 'v1' ? [staged.entry.manifest] : []),
+        ],
+        reservedProviders,
+      );
       selections[name] = {
         installation: staged.installation,
         version: requested,
@@ -192,6 +312,26 @@ export async function changePlugin(
     throw error;
   } finally {
     await release();
+  }
+}
+
+// A v1 manifest names its provider before any code runs, so a clash is refused at install time. A
+// v2 package names its provider only once loaded; the registry records a clash then.
+function assertUniqueLegacyProviders(
+  manifests: readonly PluginManifest[],
+  reserved: readonly string[],
+): void {
+  const providers = new Set<string>([...ROUTING_PROVIDER_IDENTITIES, ...reserved]);
+  for (const { agentDevicePlugin } of manifests) {
+    if (providers.has(agentDevicePlugin.provider))
+      throw new AppError(
+        'INVALID_ARGS',
+        `Duplicate provider plugin: ${agentDevicePlugin.provider}`,
+        {
+          reason: 'duplicate_provider',
+        },
+      );
+    providers.add(agentDevicePlugin.provider);
   }
 }
 

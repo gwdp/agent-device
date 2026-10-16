@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { test } from 'vitest';
-import { createBundledCloudWebDriverRuntimes } from '@agent-device/provider-webdriver';
+import { createBundledCloudWebDriverRuntimes } from './bundled-cloud-webdriver-runtimes.ts';
 import { createProviderDeviceRuntimeRequestProviders } from '../../../src/provider-device-runtime.ts';
 import { createDaemonHttpServer } from '@agent-device/daemon/testing/server/http-server';
 import { buildHttpRpcPayload } from '../../../src/daemon-client/daemon-client-rpc.ts';
@@ -35,7 +35,7 @@ test('lease_allocate over HTTP prepares the BrowserStack session end to end', as
   }
 
   await withProviderScenarioResource(FakeBrowserStackServer.start, async (server) => {
-    const runtimes = createBundledCloudWebDriverRuntimes({
+    const runtimes = await createBundledCloudWebDriverRuntimes({
       env: {
         BROWSERSTACK_USERNAME: 'browser-user',
         BROWSERSTACK_ACCESS_KEY: 'browser-key',

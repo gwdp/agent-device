@@ -42,7 +42,7 @@ import {
 } from '@agent-device/device-selection/inventory-gateways-fixtures';
 import { createHostDiagnostics } from '../../../src/platform-runtime-host-diagnostics.ts';
 import type { PlatformRuntimeProviderRegistration } from '../../../src/platform-runtime-gateway.ts';
-import { createProviderPlatformRuntimeRegistrations } from '../../../src/provider-device-runtimes.ts';
+import { createProviderPlatformRuntimeRegistrations } from './provider-platform-registrations.ts';
 import { isActiveProviderDevice } from '../../../src/provider-device-runtime.ts';
 import { installProviderDeviceAdmission } from '@agent-device/daemon/testing/provider-device-admission';
 import { installInteractorResolution } from '@agent-device/daemon/testing/interactor-resolution';
@@ -139,7 +139,7 @@ export async function createProviderScenarioHarness(
     vegaToolProvider,
     webProvider,
     appleSimulatorScreenRecordingTransport,
-    providerCredentials = readDaemonProviderCredentials({}, path.dirname(sessionDir)),
+    providerCredentials = readDaemonProviderCredentials({}, path.dirname(sessionDir), []),
     ...routerDeps
   } = deps;
   const platformRuntimeOptions =

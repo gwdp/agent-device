@@ -5,6 +5,7 @@ import { resolveDaemonPaths } from '@agent-device/daemon-contracts/daemon-resolu
 import { mkdtempForTestSync } from '@agent-device/test-kit';
 import { createDaemonRuntimeDeps } from './daemon-composition.ts';
 import { providerCredentialFingerprint } from './provider-credential-fingerprint.ts';
+import { builtinPluginInventory } from './__tests__/test-utils/builtin-plugin-inventory.ts';
 
 vi.mock('./platform-runtime.ts', () => ({
   androidObservation: {},
@@ -28,13 +29,21 @@ vi.mock('./platform-runtime.ts', () => ({
   createPlatformDeviceInventoryGateways: () => ({}),
 }));
 
-vi.mock('./provider-device-runtimes.ts', () => ({
-  DEFAULT_PROVIDER_RUNTIME_REQUIRED_IDS: [],
-  createDaemonProviderRuntimeComposition: async () => ({ runtimes: [], platformModules: [] }),
+vi.mock('./provider-device-runtimes.ts', async () => ({
+  createDaemonProviderRuntimeComposition: async () => ({
+    runtimes: [],
+    platformModules: [],
+    claimedProviders: [],
+    shutdown: async () => {},
+    inventory: await (
+      await import('./__tests__/test-utils/builtin-plugin-inventory.ts')
+    ).builtinPluginInventory(),
+  }),
 }));
 
 test('daemon startup compares lease credentials with its own startup environment', async () => {
   const stateDir = mkdtempForTestSync('agent-device-daemon-credential-composition-');
+  const inventory = await builtinPluginInventory();
   const daemonEnv = { BROWSERSTACK_USERNAME: 'user', BROWSERSTACK_ACCESS_KEY: 'key-1' };
   const runtime = await startDaemonRuntime({
     env: {
@@ -51,9 +60,11 @@ test('daemon startup compares lease credentials with its own startup environment
     composeDeps: createDaemonRuntimeDeps,
   });
   try {
-    const { httpPort, token } = JSON.parse(
+    const { httpPort, token, plugins } = JSON.parse(
       fs.readFileSync(resolveDaemonPaths(stateDir).infoPath, 'utf8'),
-    ) as { httpPort: number; token: string };
+    ) as { httpPort: number; token: string; plugins: unknown };
+    // The composed inventory is what the daemon publishes in its own record.
+    expect(plugins).toEqual(inventory);
     const allocate = async (env: Record<string, string>) =>
       await (
         await fetch(`http://127.0.0.1:${httpPort}/rpc`, {
@@ -68,7 +79,12 @@ test('daemon startup compares lease credentials with its own startup environment
               tenantId: 'tenant',
               runId: 'run',
               leaseProvider: 'browserstack',
-              providerCredentialFingerprint: providerCredentialFingerprint('browserstack', env),
+              providerCredentialFingerprint: providerCredentialFingerprint(
+                'browserstack',
+                env,
+                undefined,
+                inventory,
+              ),
             },
           }),
         })

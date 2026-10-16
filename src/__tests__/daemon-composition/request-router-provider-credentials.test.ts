@@ -9,9 +9,11 @@ import {
 } from '../../provider-credential-fingerprint.ts';
 import { LeaseRegistry } from '@agent-device/daemon/testing/lease-registry';
 import { createRequestHandler } from '@agent-device/daemon/testing/__tests__/test-device-runtime-gateway';
+import { builtinPluginInventory } from '../test-utils/builtin-plugin-inventory.ts';
 import { testCreateCommandSurface } from './command-surface-fixture.ts';
 
 const DAEMON_ENV = { LIMRUN_API_KEY: 'lim-key' };
+const inventory = await builtinPluginInventory();
 
 test.for([
   [{ LIMRUN_API_KEY: 'lim-rotated' }, 'provider-credentials-changed', 0],
@@ -28,7 +30,7 @@ test.for([
       sessionStore: makeSessionStore('agent-device-router-provider-credentials-store-'),
       leaseRegistry: new LeaseRegistry(),
       deviceInventoryGateways: createTestDeviceInventoryGateways(),
-      providerCredentials: readDaemonProviderCredentials(DAEMON_ENV, stateDir),
+      providerCredentials: readDaemonProviderCredentials(DAEMON_ENV, stateDir, inventory),
       leaseLifecycleProvider: {
         allocate: async () => {
           allocated += 1;
@@ -51,7 +53,12 @@ test.for([
         clientId: 'client-a',
         leaseBackend: 'ios-instance',
         leaseProvider: 'limrun',
-        providerCredentialFingerprint: providerCredentialFingerprint('limrun', shellEnv),
+        providerCredentialFingerprint: providerCredentialFingerprint(
+          'limrun',
+          shellEnv,
+          undefined,
+          inventory,
+        ),
       },
     });
 

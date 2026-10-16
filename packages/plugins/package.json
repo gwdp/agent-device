@@ -7,17 +7,24 @@
   "dependencies": {
     "@agent-device/contracts": "workspace:*",
     "@agent-device/host-kit": "workspace:*",
-    "@agent-device/kernel": "workspace:*",
-    "@agent-device/provider-webdriver": "workspace:*"
+    "@agent-device/kernel": "workspace:*"
   },
   "exports": {
     "./connection": {
       "types": "./src/connection.ts",
       "default": "./src/connection.ts"
     },
+    "./contract": {
+      "types": "./src/contract.ts",
+      "default": "./src/contract.ts"
+    },
     "./host": {
       "types": "./src/host.ts",
       "default": "./src/host.ts"
+    },
+    "./inventory": {
+      "types": "./src/inventory.ts",
+      "default": "./src/inventory.ts"
     },
     "./load": {
       "types": "./src/load.ts",
@@ -26,6 +33,10 @@
     "./manifest": {
       "types": "./src/manifest.ts",
       "default": "./src/manifest.ts"
+    },
+    "./registry": {
+      "types": "./src/registry.ts",
+      "default": "./src/registry.ts"
     },
     "./store": {
       "types": "./src/store.ts",

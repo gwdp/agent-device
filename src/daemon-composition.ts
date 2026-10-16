@@ -17,10 +17,7 @@ import {
   createProviderDeviceRuntimeRequestProviders,
   isActiveProviderDevice,
 } from './provider-device-runtime.ts';
-import {
-  createDaemonProviderRuntimeComposition,
-  DEFAULT_PROVIDER_RUNTIME_REQUIRED_IDS,
-} from './provider-device-runtimes.ts';
+import { createDaemonProviderRuntimeComposition } from './provider-device-runtimes.ts';
 import { readDaemonProviderCredentials } from './provider-credential-fingerprint.ts';
 import { getInteractor } from './core/interactors.ts';
 import {
@@ -101,7 +98,7 @@ export const createDaemonRuntimeDeps: ComposeDaemonRuntimeDeps = async (
   });
   const providerRuntimeProviders = createProviderDeviceRuntimeRequestProviders(
     providerDeviceRuntimes,
-    { providerRuntimeRequiredIds: DEFAULT_PROVIDER_RUNTIME_REQUIRED_IDS },
+    { providerRuntimeRequiredIds: providerComposition.claimedProviders },
   );
   const requestPlatformProviders = createRequestPlatformProviders({
     providers: {
@@ -129,8 +126,8 @@ export const createDaemonRuntimeDeps: ComposeDaemonRuntimeDeps = async (
     ownedProcessRecords,
     hostDiagnostics,
     ownerLifecycle: platformDaemonLifecycleOwners,
-    providerDeviceRuntimes,
-    skippedProviderRuntimes: Object.freeze([...(providerComposition.skipped ?? [])]),
+    shutdownProviderRuntimes: providerComposition.shutdown,
+    pluginInventory: providerComposition.inventory,
     leaseLifecycleProvider: providerRuntimeProviders.leaseLifecycleProvider,
     providerRuntimeIds: providerRuntimeProviders.providerRuntimeIds,
     recoverExpiredLease: providerRuntimeProviders.recoverExpiredLease,
@@ -148,7 +145,11 @@ export const createDaemonRuntimeDeps: ComposeDaemonRuntimeDeps = async (
       deviceInventoryGateways,
       platformServices: createDaemonPlatformServices(),
       androidObservation,
-      providerCredentials: readDaemonProviderCredentials(env, baseDir),
+      providerCredentials: readDaemonProviderCredentials(
+        env,
+        baseDir,
+        providerComposition.inventory,
+      ),
       createCommandSurface: async (config: AgentDeviceRuntimeConfig) =>
         (
           await import('./command-runtime/runtime-command-surface.ts')
