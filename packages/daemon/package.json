@@ -120,6 +120,10 @@
       "types": "./src/core/capture-disclosure.ts",
       "default": "./src/core/capture-disclosure.ts"
     },
+    "./testing/context": {
+      "types": "./src/core/context.ts",
+      "default": "./src/core/context.ts"
+    },
     "./testing/deferred-interaction-outcome": {
       "types": "./src/core/deferred-interaction-outcome.ts",
       "default": "./src/core/deferred-interaction-outcome.ts"
