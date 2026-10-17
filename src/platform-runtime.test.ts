@@ -32,8 +32,10 @@ vi.mock('./platform-runtime-host.ts', () => {
 
 import {
   createPlatformDeviceInventoryGateways,
-  platformModuleRegistry,
+  createPlatformModuleRegistryForHost,
 } from './platform-runtime.ts';
+
+const platformModuleRegistry = createPlatformModuleRegistryForHost({});
 
 describe('platform module metadata composition', () => {
   test('registers each canonical family exactly once in canonical order', () => {

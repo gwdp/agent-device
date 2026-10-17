@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import type {
   AppLogProcessCommand,
   AppLogProcessTransport,
@@ -28,7 +29,7 @@ export async function resolveAndroidAppLogProcessTransport(
       const child = spawn([...adb.args], {
         allowFailure: adb.options?.allowFailure,
         cwd: adb.options?.cwd,
-        env: adb.options?.env ? { ...process.env, ...adb.options.env } : undefined,
+        env: adb.options?.env ? { ...commandHostEnvironment().env, ...adb.options.env } : undefined,
         captureOutput: false,
         signal,
       });

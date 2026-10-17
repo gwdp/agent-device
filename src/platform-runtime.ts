@@ -1,3 +1,5 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
+import type { EnvMap } from '@agent-device/kernel/source-value';
 import type {
   ProviderDeviceInventorySource,
   ProviderDeviceRuntime,
@@ -70,10 +72,6 @@ export async function getAndroidAppStateWithAdb(
   return await readAndroidAppStateWithExecutor(adb, signal);
 }
 
-const androidInventoryModule = createAndroidInventoryModule({
-  sdkRoots: configuredValues(process.env.ANDROID_SDK_ROOT, process.env.ANDROID_HOME),
-});
-
 /** One root-composed Android observer shared by every daemon request. */
 export const androidObservation = createPackageAndroidObservationAdapter(
   createAndroidObservationHost(),
@@ -86,26 +84,28 @@ const shutdownLoaders = Object.freeze({
     await loadAndroidShutdownRuntime(dependencies),
 });
 
-const harmonyosInventoryModule = createHarmonyInventoryModule({
-  hdcSdkPath: process.env.HDC_SDK_PATH,
-  devecoSdkHome: process.env.DEVECO_SDK_HOME,
-  commandLineToolsHome: process.env.HARMONYOS_COMMAND_LINE_TOOLS,
-});
-
-export const platformModuleRegistry = createPlatformModuleRegistry([
-  appleInventoryModule,
-  androidInventoryModule,
-  harmonyosInventoryModule,
-  vegaInventoryModule,
-  linuxInventoryModule,
-  webInventoryModule,
-]);
+export function createPlatformModuleRegistryForHost(env: EnvMap) {
+  return createPlatformModuleRegistry([
+    appleInventoryModule,
+    createAndroidInventoryModule({
+      sdkRoots: configuredValues(env.ANDROID_SDK_ROOT, env.ANDROID_HOME),
+    }),
+    createHarmonyInventoryModule({
+      hdcSdkPath: env.HDC_SDK_PATH,
+      devecoSdkHome: env.DEVECO_SDK_HOME,
+      commandLineToolsHome: env.HARMONYOS_COMMAND_LINE_TOOLS,
+    }),
+    vegaInventoryModule,
+    linuxInventoryModule,
+    webInventoryModule,
+  ]);
+}
 
 export async function createPlatformDeviceInventoryGateways(
   provider?: ProviderDeviceInventorySource,
 ): Promise<ComposedDeviceInventoryGateways> {
   return await attachAppleInstalledAppProbe({
-    registry: platformModuleRegistry,
+    registry: createPlatformModuleRegistryForHost(commandHostEnvironment().env),
     loadHost: async () => {
       const { createDeviceInventoryHost } = await import('./platform-runtime-host.ts');
       return createDeviceInventoryHost();

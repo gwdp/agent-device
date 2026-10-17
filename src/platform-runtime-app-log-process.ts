@@ -15,7 +15,7 @@ import type { DeviceIdentity } from '@agent-device/kernel/device';
 import fs from 'node:fs';
 import path from 'node:path';
 import { openVerifiedFileForRead } from '@agent-device/host-kit/file';
-import { runCmdBackground } from '@agent-device/host-kit/command';
+import { commandHostEnvironment, runCmdBackground } from '@agent-device/host-kit/command';
 import {
   isProcessAlive,
   readProcessCommand,
@@ -173,7 +173,7 @@ function launchLocalAppLogCommand(
   return runCmdBackground(request.executable, [...request.args], {
     allowFailure: request.allowFailure,
     cwd: request.cwd,
-    env: request.env ? { ...process.env, ...request.env } : undefined,
+    env: request.env ? { ...commandHostEnvironment().env, ...request.env } : undefined,
     captureOutput: false,
     signal,
   });

@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import { ensureAppLogPath } from '@agent-device/capture-kit/app-log-files';
 import type { AppLogOutputSink } from '@agent-device/contracts/app-log-runtime';
 import fs from 'node:fs';
@@ -90,7 +91,7 @@ function requireManagedOutputPath(sessionsDir: string, pathname: string): string
 }
 
 function redactionPatterns(): RegExp[] {
-  return (process.env.AGENT_DEVICE_APP_LOG_REDACT_PATTERNS ?? '')
+  return (commandHostEnvironment().env.AGENT_DEVICE_APP_LOG_REDACT_PATTERNS ?? '')
     .split(',')
     .map((part) => part.trim())
     .filter(Boolean)

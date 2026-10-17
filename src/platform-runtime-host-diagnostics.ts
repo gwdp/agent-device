@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import type { DeviceInfo, PlatformSelector } from '@agent-device/kernel/device';
 import type { DoctorCheck } from '@agent-device/contracts/observability';
 import type {
@@ -19,7 +20,7 @@ export function createHostDiagnostics(): HostDiagnostics {
     ): Promise<DoctorCheck | undefined> => {
       if (platform === 'android') {
         const { androidToolchainCheck } = await loadAndroidMechanics();
-        return await androidToolchainCheck(process.env, process.platform);
+        return await androidToolchainCheck(commandHostEnvironment().env, process.platform);
       }
       if (platform === 'vega') {
         const { vegaToolchainCheck } = await import('@agent-device/platform-vega');
