@@ -7,7 +7,12 @@ import path from 'node:path';
 import { uploadArtifact } from '../upload-client.ts';
 import type { UploadProgressEvent } from '../upload-progress.ts';
 import { runCmdSync, withCommandExecutorOverride } from '@agent-device/host-kit/command';
-import { closeLoopbackServer, listenOnLoopback, mkdtempForTestSync } from '@agent-device/test-kit';
+import {
+  bindTestCommandHost,
+  closeLoopbackServer,
+  listenOnLoopback,
+  mkdtempForTestSync,
+} from '@agent-device/test-kit';
 import { DAEMON_HTTP_LEASE_HEADER } from '@agent-device/contracts/daemon-http';
 
 const TEST_TOKEN = 'agent-device-upload-test-token';
@@ -19,6 +24,8 @@ afterEach(async () => {
   }
   tempDirs.length = 0;
 });
+
+bindTestCommandHost();
 
 test('uploadArtifact returns preflight uploadId without uploading bytes on cache hit', async () => {
   const content = 'cached-apk-payload';

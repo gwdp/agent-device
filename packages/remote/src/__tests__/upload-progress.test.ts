@@ -1,3 +1,4 @@
+import { bindTestCommandHost } from '@agent-device/test-kit';
 import { test, vi } from 'vitest';
 import assert from 'node:assert/strict';
 import {
@@ -26,6 +27,8 @@ function renderEvents(events: UploadProgressEvent[]): string {
   }
   return output;
 }
+
+bindTestCommandHost();
 
 test('the stderr reporter formats start, resume, progress and fallback events', () => {
   const output = renderEvents([
