@@ -63,7 +63,6 @@ test('public HTTP rejects Limrun uploaded-app listing and allocation before prov
     leaseRegistry,
     deviceInventoryGateways: createTestDeviceInventoryGateways(),
     providerRuntimeIds: providers.providerRuntimeIds,
-    providerRuntimeRequiredIds: providers.providerRuntimeRequiredIds,
     leaseLifecycleProvider: providers.leaseLifecycleProvider,
     providerAppCatalog: providers.providerAppCatalog,
     providerDeviceRuntimeScope: providers.providerDeviceRuntimeScope,
