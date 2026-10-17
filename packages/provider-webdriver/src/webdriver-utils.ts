@@ -150,7 +150,7 @@ export function createHubUploadApp(
 export async function resolveHubAppReference(options: {
   service: string;
   app: string;
-  cwd?: string;
+  cwd: string;
   /** How the scheme reads in the error message, e.g. `a bs:// app id`. */
   referenceLabel: string;
   /**
@@ -165,7 +165,7 @@ export async function resolveHubAppReference(options: {
   const reference = options.parseReference(app);
   if (reference !== undefined) return reference;
   if (/^https?:\/\//i.test(app)) return app;
-  const appPath = path.resolve(options.cwd ?? process.cwd(), app);
+  const appPath = path.resolve(options.cwd, app);
   if (!fs.existsSync(appPath)) {
     throw new AppError(
       'INVALID_ARGS',
