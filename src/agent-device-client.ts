@@ -124,11 +124,7 @@ export function createAgentDeviceClient(
     // mark the request canceled.
     const response = await cancellation.guard(
       async () =>
-        await withCommandHost(
-          { host, requestEnv: undefined },
-          async () =>
-            await transport(request, { authToken: merged.daemonAuthToken, signal: merged.signal }),
-        ),
+        await transport(request, { authToken: merged.daemonAuthToken, signal: merged.signal }),
     );
     if (!response.ok) {
       throwDaemonError(response.error);

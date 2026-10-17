@@ -4,6 +4,7 @@ import type { DaemonWireRequest } from '@agent-device/contracts/command';
 import type { AgentDeviceDaemonTransportContext } from '@agent-device/contracts/client';
 import { AppError } from '@agent-device/kernel/errors';
 import type { EnvMap, HostEnvironment } from '@agent-device/kernel/source-value';
+import { withCommandHost } from '@agent-device/host-kit/command';
 import { captureHostEnvironment } from '@agent-device/host-kit/process';
 import {
   createRequestId,
@@ -59,6 +60,17 @@ export function resolveRunTransport(
 }
 
 async function sendToDaemonOnHost(
+  req: Omit<DaemonRequest, 'token'>,
+  options: DaemonTransportOptions,
+  host: HostEnvironment,
+): Promise<DaemonResponse> {
+  return await withCommandHost(
+    { host, requestEnv: undefined },
+    async () => await performDaemonSend(req, options, host),
+  );
+}
+
+async function performDaemonSend(
   req: Omit<DaemonRequest, 'token'>,
   options: DaemonTransportOptions,
   host: HostEnvironment,

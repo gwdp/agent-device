@@ -1,3 +1,4 @@
+import { bindTestCommandHost } from '@agent-device/test-kit';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { IncomingHttpHeaders } from 'node:http';
@@ -29,6 +30,8 @@ import testMuPlugin from '@agent-device/testmu';
 import { createPluginHost } from '@agent-device/plugins/host';
 import { createCloudWebDriverRuntime } from '@agent-device/provider-webdriver/plugin';
 import { CLOUD_WEBDRIVER_PROVIDERS } from '@agent-device/provider-webdriver/providers';
+
+bindTestCommandHost();
 
 const CLIENT_VERSION = '0.20.3-test';
 

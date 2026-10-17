@@ -1,3 +1,4 @@
+import { bindTestCommandHost } from '@agent-device/test-kit';
 import type { DaemonWireRequest } from '@agent-device/contracts/command';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -28,6 +29,8 @@ import {
   providerRuntimeFor,
 } from './cloud-webdriver-regression-fixtures.ts';
 import { CLOUD_WEBDRIVER_PROVIDERS } from '@agent-device/provider-webdriver/providers';
+
+bindTestCommandHost();
 
 test('AWS Device Farm endpoint selection skips live-control WebSocket URLs', async () => {
   await withProviderScenarioResource(ProviderRegressionServer.start, async (server) => {

@@ -11,7 +11,6 @@ import {
   listenOnLoopback,
   mkdtempForTestSync,
   supportsLoopbackBind,
-  bindTestCommandHost,
 } from '@agent-device/test-kit';
 import {
   beginStderrCapture,
@@ -27,8 +26,6 @@ import { canConnectSocket } from '../daemon-client-transport.ts';
 import { DAEMON_RPC_PROTOCOL_VERSION } from '@agent-device/contracts/daemon-http';
 import { resolveDaemonPaths } from '@agent-device/daemon-contracts/daemon-resolution';
 import { readVersion } from '@agent-device/host-kit/version';
-
-bindTestCommandHost();
 
 type MockHttpResponse = EventEmitter & {
   headers?: Record<string, string>;
