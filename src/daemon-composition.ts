@@ -116,6 +116,7 @@ export const createDaemonRuntimeDeps: ComposeDaemonRuntimeDeps = async (
     },
   });
   const deviceInventoryGateways = await createPlatformDeviceInventoryGateways(
+    env,
     providerRuntimeProviders.deviceInventorySource,
   );
   // Root composition of the platform-services port and the owner-scoped claim-recovery gateway.

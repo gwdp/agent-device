@@ -1,4 +1,3 @@
-import type { EnvMap } from '@agent-device/kernel/source-value';
 import type {
   ProviderDeviceInventorySource,
   ProviderDeviceRuntime,
@@ -83,7 +82,9 @@ const shutdownLoaders = Object.freeze({
     await loadAndroidShutdownRuntime(dependencies),
 });
 
-export function createPlatformModuleRegistryForHost(env: EnvMap) {
+export function createPlatformModuleRegistryForHost(
+  env: Readonly<Record<string, string | undefined>>,
+) {
   return createPlatformModuleRegistry([
     appleInventoryModule,
     createAndroidInventoryModule({
@@ -101,12 +102,11 @@ export function createPlatformModuleRegistryForHost(env: EnvMap) {
 }
 
 export async function createPlatformDeviceInventoryGateways(
+  env: Readonly<Record<string, string | undefined>>,
   provider?: ProviderDeviceInventorySource,
 ): Promise<ComposedDeviceInventoryGateways> {
   return await attachAppleInstalledAppProbe({
-    registry: createPlatformModuleRegistryForHost(
-      (await import('@agent-device/host-kit/command')).commandHostEnvironment().env,
-    ),
+    registry: createPlatformModuleRegistryForHost(env),
     loadHost: async () => {
       const { createDeviceInventoryHost } = await import('./platform-runtime-host.ts');
       return createDeviceInventoryHost();
