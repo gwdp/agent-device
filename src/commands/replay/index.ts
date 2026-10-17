@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import type { CommandSchemaOverride } from '@agent-device/command-registry/command-schema';
 import type { CommandResultMap } from '@agent-device/command-registry/command-result';
 import { messageOutput } from '../output-common.ts';
@@ -245,7 +246,7 @@ export const testCliReader: CliReader = (positionals, flags) => ({
 export const replayDaemonWriter: AsyncDaemonWriter = async (input) => {
   const inputPath = requiredDaemonString(input.path, 'replay requires path');
   const replayBackend = readReplayBackend(input);
-  const replayShellEnv = collectReplayClientShellEnv(process.env);
+  const replayShellEnv = collectReplayClientShellEnv(commandHostEnvironment().env);
   return request(REPLAY_COMMAND_NAME, [inputPath], {
     ...input,
     replayUpdate: input.update,
@@ -272,7 +273,7 @@ export const testDaemonWriter: AsyncDaemonWriter = async (input) => {
   const inputs = input.paths ?? [];
   const replayBackend = readReplayBackend(input);
   const cwd = readReplayClientCwd(input);
-  const replayShellEnv = collectReplayClientShellEnv(process.env);
+  const replayShellEnv = collectReplayClientShellEnv(commandHostEnvironment().env);
   const env = readReplayScriptSourceEnv(input, replayShellEnv);
   return request(TEST_COMMAND_NAME, inputs, {
     ...stripReplayTestPresentationInput(input),
@@ -345,7 +346,9 @@ function readReplayScriptSourceEnv(
 }
 
 function readReplayClientCwd(input: CommandInput): string {
-  return typeof input.cwd === 'string' && input.cwd.length > 0 ? input.cwd : process.cwd();
+  return typeof input.cwd === 'string' && input.cwd.length > 0
+    ? input.cwd
+    : commandHostEnvironment().cwd;
 }
 
 function readReplayBackend(input: CommandInput): string | undefined {

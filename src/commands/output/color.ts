@@ -1,11 +1,13 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import { styleText } from 'node:util';
 
 export function supportsColor(stream: { isTTY?: boolean } = process.stdout): boolean {
-  const forceColor = process.env.FORCE_COLOR;
+  const { env } = commandHostEnvironment();
+  const forceColor = env.FORCE_COLOR;
   if (typeof forceColor === 'string') {
     return forceColor !== '0';
   }
-  if (typeof process.env.NO_COLOR === 'string') {
+  if (typeof env.NO_COLOR === 'string') {
     return false;
   }
   return Boolean(stream.isTTY);

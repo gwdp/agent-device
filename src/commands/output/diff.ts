@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import path from 'node:path';
 import { colorize, supportsColor } from './color.ts';
 import { readSnapshotWarnings } from './snapshot.ts';
@@ -157,7 +158,7 @@ function formatScreenshotDiffRegionEntryLines(region: ScreenshotDiffRegion): str
 }
 
 function toRelativePath(filePath: string): string {
-  const cwd = process.cwd();
+  const cwd = commandHostEnvironment().cwd;
   const relativePath = path.relative(cwd, filePath);
   if (relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath))) {
     return relativePath === '' ? '.' : `.${path.sep}${relativePath}`;
