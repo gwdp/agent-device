@@ -138,3 +138,22 @@ test('rejects malformed reporter hooks when the module is loaded', async () => {
     await fs.rm(root, { recursive: true, force: true });
   }
 });
+
+test('expands a ~/ reporter path against the host HOME', async () => {
+  const home = await mkdtempForTest('agent-device-reporter-home-');
+  const previousHome = process.env.HOME;
+  try {
+    await fs.writeFile(path.join(home, 'reporter.mjs'), "export default { name: 'home' };", 'utf8');
+    process.env.HOME = home;
+    const reporter = await createCustomReplayTestReporter({
+      kind: 'custom',
+      modulePath: '~/reporter.mjs',
+      raw: '~/reporter.mjs',
+    });
+    assert.equal(reporter.name, 'home');
+  } finally {
+    if (previousHome === undefined) delete process.env.HOME;
+    else process.env.HOME = previousHome;
+    await fs.rm(home, { recursive: true, force: true });
+  }
+});

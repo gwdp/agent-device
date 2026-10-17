@@ -1,6 +1,5 @@
 import { commandHostEnvironment } from '@agent-device/host-kit/command';
-import os from 'node:os';
-import path from 'node:path';
+import { resolveUserPath } from '@agent-device/host-kit/file';
 import { pathToFileURL } from 'node:url';
 import { AppError } from '@agent-device/kernel/errors';
 import type { ReplayTestReporter, ReplayTestReporterFactory } from './types.ts';
@@ -49,10 +48,8 @@ function readCustomReporterFactory(
 
 function resolveCustomReporterModulePath(modulePath: string): string {
   if (modulePath.startsWith('file:')) return modulePath;
-  const expandedPath = modulePath.startsWith('~/')
-    ? path.join(os.homedir(), modulePath.slice(2))
-    : modulePath;
-  return path.resolve(commandHostEnvironment().cwd, expandedPath);
+  const { cwd, env } = commandHostEnvironment();
+  return resolveUserPath(modulePath, { cwd, env });
 }
 
 async function importCustomReporterModule(modulePath: string): Promise<CustomReporterModule> {
