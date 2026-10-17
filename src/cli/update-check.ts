@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runCmdDetached } from '@agent-device/host-kit/command';
+import { commandHostEnvironment, runCmdDetached } from '@agent-device/host-kit/command';
 import { compareVersions } from '@agent-device/host-kit/version';
 
 const PACKAGE_NAME = 'agent-device';
@@ -91,9 +91,10 @@ function shouldEnableUpgradeNotifier(options: UpgradeNotifierOptions): boolean {
   if (!options.command) return false;
   if (options.command === 'help' || options.command === 'test') return false;
   if (options.flags.help || options.flags.version || options.flags.json) return false;
-  if (process.env.CI?.trim()) return false;
-  if (process.env.NODE_ENV === 'test') return false;
-  if (process.env.AGENT_DEVICE_NO_UPDATE_NOTIFIER?.trim()) return false;
+  const { env } = commandHostEnvironment();
+  if (env.CI?.trim()) return false;
+  if (env.NODE_ENV === 'test') return false;
+  if (env.AGENT_DEVICE_NO_UPDATE_NOTIFIER?.trim()) return false;
   return Boolean(process.stderr.isTTY);
 }
 

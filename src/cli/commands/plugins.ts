@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import { AppError } from '@agent-device/kernel/errors';
 import { changePlugin, listPlugins } from '@agent-device/plugins/store';
 import { writeCommandOutput } from './shared.ts';
@@ -16,9 +17,9 @@ export const pluginsCommand: ClientCommandHandler = async ({ positionals, flags 
     );
   }
   if (action !== 'list' && name) {
-    await changePlugin(action as 'add' | 'update' | 'remove', name, process.env);
+    await changePlugin(action as 'add' | 'update' | 'remove', name, commandHostEnvironment().env);
   }
-  const plugins = listPlugins(process.env);
+  const plugins = listPlugins(commandHostEnvironment().env);
   await writeCommandOutput(flags, { plugins, restartRequired: action !== 'list' }, () =>
     [
       ...plugins.map((plugin) =>

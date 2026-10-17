@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import path from 'node:path';
 import { replayTestStepLines } from './trace.ts';
 import type { ReplaySuiteTestResult } from '@agent-device/contracts/replay';
@@ -239,7 +240,10 @@ function formatReplayTestProgressName(event: ReplayTestResult | ReplayTestStep):
 }
 
 function formatReplayTestProgressStatusLabel(event: ReplayTestResult): string {
-  const useColor = shouldColorStatusMarkers(process.env, Boolean(process.stderr.isTTY));
+  const useColor = shouldColorStatusMarkers(
+    commandHostEnvironment().env,
+    Boolean(process.stderr.isTTY),
+  );
   if (event.status === 'pass') {
     return formatCliStatusMarker('pass', {
       useColor,

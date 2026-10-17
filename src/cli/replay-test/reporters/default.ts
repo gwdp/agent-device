@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import type { ReplaySuiteResult } from '@agent-device/contracts/replay';
 import { replayTestFailureStepLines } from '../trace.ts';
 import {
@@ -103,11 +104,12 @@ export function createDefaultReplayTestReporter(): ReplayTestReporter {
 }
 
 function shouldUseLiveProgress(context: ReplayTestReporterContext): boolean {
-  return context.stderr.isTTY && !process.env.CI;
+  return context.stderr.isTTY && !commandHostEnvironment().env.CI;
 }
 
 function terminalReflowsOnResize(): boolean {
-  return !process.env.TMUX && !process.env.STY;
+  const { env } = commandHostEnvironment();
+  return !env.TMUX && !env.STY;
 }
 
 function renderReplayTestSummary(

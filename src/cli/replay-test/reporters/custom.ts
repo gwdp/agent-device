@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -51,7 +52,7 @@ function resolveCustomReporterModulePath(modulePath: string): string {
   const expandedPath = modulePath.startsWith('~/')
     ? path.join(os.homedir(), modulePath.slice(2))
     : modulePath;
-  return path.resolve(process.cwd(), expandedPath);
+  return path.resolve(commandHostEnvironment().cwd, expandedPath);
 }
 
 async function importCustomReporterModule(modulePath: string): Promise<CustomReporterModule> {

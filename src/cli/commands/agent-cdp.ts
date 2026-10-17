@@ -1,4 +1,4 @@
-import { runCmdStreaming } from '@agent-device/host-kit/command';
+import { commandHostEnvironment, runCmdStreaming } from '@agent-device/host-kit/command';
 import { AppError } from '@agent-device/kernel/errors';
 import { isRemoteBridgeBackend } from './remote-bridge.ts';
 import type { SessionRuntimeHints } from '@agent-device/kernel/contracts';
@@ -84,8 +84,8 @@ export async function runAgentCdpCommand(
 ): Promise<number> {
   const passthroughArgs = buildAgentCdpPassthroughArgs(args, options);
   const result = await runCmdStreaming('npm', buildAgentCdpNpmExecArgs(passthroughArgs), {
-    cwd: options.cwd ?? process.cwd(),
-    env: options.env ?? process.env,
+    cwd: options.cwd ?? commandHostEnvironment().cwd,
+    env: options.env ?? commandHostEnvironment().env,
     allowFailure: true,
     onStdoutChunk: (chunk) => {
       process.stdout.write(chunk);

@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import { AppError } from '@agent-device/kernel/errors';
 import type { CliFlags } from '@agent-device/contracts/command';
 import type { DaemonLockPolicy } from '@agent-device/kernel/contracts';
@@ -43,7 +44,7 @@ export function applyDefaultPlatformBinding<T extends LockableFlags>(
 }
 
 export function resolveBindingSettings(options: BindingOptions): BindingSettings {
-  const env = options.env ?? process.env;
+  const env = options.env ?? commandHostEnvironment().env;
   const defaultPlatform =
     options.inheritedPlatform ??
     options.configuredPlatform ??

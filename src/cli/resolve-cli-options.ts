@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import type { CliFlags } from '@agent-device/contracts/command';
 import { mergeDefinedFlags } from '../commands/schema/merge-flags.ts';
 import { finalizeParsedArgs, parseRawArgs } from './parser/args.ts';
@@ -14,8 +15,8 @@ export function resolveCliOptions(
   },
 ) {
   const rawParsed = parseRawArgs(argv);
-  const env = options?.env ?? process.env;
-  const cwd = options?.cwd ?? process.cwd();
+  const env = options?.env ?? commandHostEnvironment().env;
+  const cwd = options?.cwd ?? commandHostEnvironment().cwd;
   const remoteConfigDefaults = shouldApplyRemoteConfigDefaults(rawParsed.command)
     ? resolveRemoteConfigDefaults({
         remoteConfig: rawParsed.flags.remoteConfig,

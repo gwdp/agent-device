@@ -27,13 +27,13 @@ export const recordingCommand: ClientCommandHandler = async ({ positionals, flag
       : undefined;
 
   // Lazy: createAgentDevice pulls in the client-side command runtime, which only this action needs.
-  const [{ createAgentDevice }, { createLocalArtifactAdapter }] = await Promise.all([
+  const [{ createAgentDevice }, { createLocalArtifactAdapterAt }] = await Promise.all([
     import('../../runtime.ts'),
     import('../../io.ts'),
   ]);
   const runtime = createAgentDevice({
     backend: { platform: 'ios' },
-    artifacts: createLocalArtifactAdapter(),
+    artifacts: createLocalArtifactAdapterAt({ cwd: commandHostEnvironment().cwd }),
     sessions: {
       get: (name) => ({ name }),
       set: () => {},

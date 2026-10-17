@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import fs from 'node:fs';
 import path from 'node:path';
 import { AppError } from '@agent-device/kernel/errors';
@@ -99,7 +100,7 @@ export async function resolveRemoteAuth(options: {
   env?: EnvMap;
   io?: AuthIo;
 }): Promise<RemoteAuthResolution> {
-  const env = options.env ?? options.io?.env ?? process.env;
+  const env = options.env ?? options.io?.env ?? commandHostEnvironment().env;
   if (!options.flags.daemonBaseUrl) return { flags: options.flags, source: 'none' };
   if (hasToken(options.flags.daemonAuthToken)) return { flags: options.flags, source: 'flag' };
   if (hasToken(env.AGENT_DEVICE_DAEMON_AUTH_TOKEN)) {
@@ -152,7 +153,7 @@ export async function resolveCloudAccessForConnect(options: {
   accessToken: string;
   cloudBaseUrl: string;
 }> {
-  const env = options.env ?? options.io?.env ?? process.env;
+  const env = options.env ?? options.io?.env ?? commandHostEnvironment().env;
   if (hasToken(options.flags.daemonAuthToken)) {
     return {
       accessToken: options.flags.daemonAuthToken,
@@ -206,7 +207,7 @@ export async function loginWithDeviceAuth(options: {
   expiresAt?: string;
   session: CliSessionRecord;
 }> {
-  const env = options.env ?? options.io?.env ?? process.env;
+  const env = options.env ?? options.io?.env ?? commandHostEnvironment().env;
   const authMode = detectAuthMode(env, options.io);
   if (authMode === 'non-interactive') {
     throw buildNonInteractiveLoginError(options.commandLabel ?? 'agent-device connect', env);
