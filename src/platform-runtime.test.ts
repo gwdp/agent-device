@@ -1,3 +1,4 @@
+import { bindTestCommandHost } from '@agent-device/test-kit';
 import { PLATFORMS } from '@agent-device/kernel/device';
 import { describe, expect, test, vi } from 'vitest';
 
@@ -34,6 +35,8 @@ import {
   createPlatformDeviceInventoryGateways,
   createPlatformModuleRegistryForHost,
 } from './platform-runtime.ts';
+
+bindTestCommandHost();
 
 const platformModuleRegistry = createPlatformModuleRegistryForHost({});
 

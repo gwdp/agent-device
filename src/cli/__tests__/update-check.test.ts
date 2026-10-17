@@ -6,6 +6,7 @@ import { mkdtempForTestSync } from '@agent-device/test-kit';
 import { withCapturedStderr, withStreamTty } from '../../__tests__/test-utils/stream-capture.ts';
 
 vi.mock('@agent-device/host-kit/command', () => ({
+  commandHostEnvironment: () => ({ env: process.env, cwd: process.cwd() }),
   runCmdDetached: vi.fn(),
 }));
 

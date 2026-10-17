@@ -1,3 +1,4 @@
+import { bindTestCommandHost } from '@agent-device/test-kit';
 import type { DeviceInfo } from '@agent-device/kernel/device';
 import { expect, test, vi } from 'vitest';
 
@@ -26,6 +27,8 @@ vi.mock('@agent-device/host-kit/command', async (importOriginal) => {
 });
 
 import { createPlatformRuntimeGateway } from './platform-runtime.ts';
+
+bindTestCommandHost();
 
 const sessionArtifacts = {
   sessionsDir: '/sessions',

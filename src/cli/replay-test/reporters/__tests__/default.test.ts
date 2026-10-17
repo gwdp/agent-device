@@ -1,8 +1,11 @@
+import { bindTestCommandHost } from '@agent-device/test-kit';
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import type { ReplaySuiteResult } from '@agent-device/contracts/replay';
 import { createDefaultReplayTestReporter } from '../default.ts';
 import type { ReplayTestReporterContext } from '../types.ts';
+
+bindTestCommandHost();
 
 function createReporterContext(options: { stderrIsTty: boolean }): {
   context: ReplayTestReporterContext;

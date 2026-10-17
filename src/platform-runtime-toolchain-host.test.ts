@@ -1,3 +1,4 @@
+import { bindTestCommandHost } from '@agent-device/test-kit';
 import { expect, test, vi } from 'vitest';
 
 const toolchains = vi.hoisted(() => ({
@@ -26,6 +27,8 @@ vi.mock('@agent-device/platform-harmonyos', () => {
 });
 
 import { createHostToolchainPreparer } from './platform-runtime-toolchain-host.ts';
+
+bindTestCommandHost();
 
 test('toolchain host loads and prepares only the selected family', async () => {
   const host = createHostToolchainPreparer();

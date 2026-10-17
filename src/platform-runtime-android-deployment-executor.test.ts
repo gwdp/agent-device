@@ -1,3 +1,4 @@
+import { bindTestCommandHost } from '@agent-device/test-kit';
 import { expect, test, vi } from 'vitest';
 import type { DeviceInfo } from '@agent-device/kernel/device';
 
@@ -11,6 +12,8 @@ vi.mock('@agent-device/platform-android/mechanics', () => ({
 }));
 
 import { createAndroidAppDeploymentExecutor } from './platform-runtime-android-deployment-executor.ts';
+
+bindTestCommandHost();
 
 const device: DeviceInfo = {
   platform: 'android',

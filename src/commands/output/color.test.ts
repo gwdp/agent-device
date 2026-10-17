@@ -1,7 +1,10 @@
+import { bindTestCommandHost } from '@agent-device/test-kit';
 import assert from 'node:assert/strict';
 import { stripVTControlCharacters } from 'node:util';
 import { test } from 'vitest';
 import { colorize, supportsColor } from './color.ts';
+
+bindTestCommandHost();
 
 test('supportsColor uses the stream TTY state by default', () => {
   const originalForceColor = process.env.FORCE_COLOR;
