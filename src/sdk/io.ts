@@ -1,5 +1,5 @@
 // Published `agent-device/io` entry: local artifact I/O plus the contracts artifact-adapter types.
-export * from '../io.ts';
+export { createLocalArtifactAdapter } from '../io.ts';
 export type {
   ArtifactAdapter,
   ArtifactDescriptor,

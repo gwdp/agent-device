@@ -7,10 +7,17 @@ import type {
   LocalArtifactAdapterOptions,
 } from '@agent-device/contracts/artifact-adapter';
 
+/** The released entry: without `cwd`, relative paths resolve against the process's working directory. */
 export function createLocalArtifactAdapter(
   options: LocalArtifactAdapterOptions = {},
 ): ArtifactAdapter {
-  const cwd = options.cwd ?? process.cwd();
+  return createLocalArtifactAdapterAt({ ...options, cwd: options.cwd ?? process.cwd() });
+}
+
+export function createLocalArtifactAdapterAt(
+  options: LocalArtifactAdapterOptions & { cwd: string },
+): ArtifactAdapter {
+  const { cwd } = options;
   const tempDir = options.tempDir ?? os.tmpdir();
   const rootDir = options.rootDir ? resolveLocalPath(options.rootDir, cwd) : undefined;
 
