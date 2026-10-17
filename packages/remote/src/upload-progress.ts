@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import { Transform } from 'node:stream';
 
 const DEFAULT_UPLOAD_PROGRESS_STEP_BYTES = 8 * 1024 * 1024;
@@ -59,7 +60,7 @@ export function createUploadProgressTransform(options: {
 }
 
 export function createStderrUploadProgressReporter(): UploadProgressSink | undefined {
-  if (process.stderr.isTTY !== true || process.env.CI) return undefined;
+  if (process.stderr.isTTY !== true || commandHostEnvironment().env.CI) return undefined;
   return (event) => {
     process.stderr.write(`${formatUploadProgressEvent(event)}\n`);
   };

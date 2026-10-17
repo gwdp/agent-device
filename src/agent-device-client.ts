@@ -75,6 +75,7 @@ import {
 } from '@agent-device/kernel/record';
 import { readSnapshotViewportSize } from '@agent-device/kernel/rect';
 import { readResponseWarnings } from '@agent-device/kernel/success-text';
+import { withCommandHost } from '@agent-device/host-kit/command';
 import { captureHostEnvironment } from '@agent-device/host-kit/process';
 import type { HostEnvironment } from '@agent-device/kernel/source-value';
 import { createLeaseClient } from './client/lease-client.ts';
@@ -123,7 +124,11 @@ export function createAgentDeviceClient(
     // mark the request canceled.
     const response = await cancellation.guard(
       async () =>
-        await transport(request, { authToken: merged.daemonAuthToken, signal: merged.signal }),
+        await withCommandHost(
+          { host, requestEnv: undefined },
+          async () =>
+            await transport(request, { authToken: merged.daemonAuthToken, signal: merged.signal }),
+        ),
     );
     if (!response.ok) {
       throwDaemonError(response.error);

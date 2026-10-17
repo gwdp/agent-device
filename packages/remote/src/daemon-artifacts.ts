@@ -1,3 +1,4 @@
+import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import type { DaemonWireRequest } from '@agent-device/contracts/command';
 import type { DaemonArtifact, DaemonResponse } from '@agent-device/kernel/contracts';
 import fs from 'node:fs';
@@ -167,7 +168,7 @@ function applyRemoteArtifactFlag(
 function resolveLocalInstallPath(rawPath: string, cwd: string | undefined): string | undefined {
   const localPath = path.isAbsolute(rawPath)
     ? rawPath
-    : path.resolve(cwd ?? process.cwd(), rawPath);
+    : path.resolve(cwd ?? commandHostEnvironment().cwd, rawPath);
   return fs.existsSync(localPath) ? localPath : undefined;
 }
 
@@ -214,7 +215,7 @@ async function prepareRemoteInstallSource(
 
   const localPath = path.isAbsolute(rawPath)
     ? rawPath
-    : path.resolve(req.meta?.cwd ?? process.cwd(), rawPath);
+    : path.resolve(req.meta?.cwd ?? commandHostEnvironment().cwd, rawPath);
   if (!fs.existsSync(localPath)) {
     return {
       installSource: {
@@ -347,7 +348,9 @@ function resolveClientArtifactOutputPath(
 
 /** Shared tail of every "what local path did the caller mean" resolution in this file. */
 function resolveAbsoluteClientPath(rawPath: string, cwd: string | undefined): string {
-  return path.isAbsolute(rawPath) ? rawPath : path.resolve(cwd ?? process.cwd(), rawPath);
+  return path.isAbsolute(rawPath)
+    ? rawPath
+    : path.resolve(cwd ?? commandHostEnvironment().cwd, rawPath);
 }
 
 function hasNonEmptyString(value: unknown): value is string {
@@ -403,7 +406,7 @@ function resolveMaterializedArtifactPath(artifact: DaemonArtifact, req: DaemonWi
     return requestedPath;
   }
   const fallbackName = artifact.fileName?.trim() || `${artifact.field}-${Date.now()}`;
-  return path.resolve(req.meta?.cwd ?? process.cwd(), fallbackName);
+  return path.resolve(req.meta?.cwd ?? commandHostEnvironment().cwd, fallbackName);
 }
 
 type DownloadRemoteArtifactParams = {

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { Writable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { AppError } from '@agent-device/kernel/errors';
-import { runCmd } from '@agent-device/host-kit/command';
+import { commandHostEnvironment, runCmd } from '@agent-device/host-kit/command';
 
 const ARTIFACT_HASH_ALGORITHM = 'sha256';
 const DEFAULT_CONTENT_TYPE = 'application/octet-stream';
@@ -62,7 +62,7 @@ async function createGzipTarArchive(localPath: string, cleanupPaths: string[]): 
     ['czf', archivePath, '-C', path.dirname(localPath), path.basename(localPath)],
     {
       env: {
-        ...process.env,
+        ...commandHostEnvironment().env,
         COPYFILE_DISABLE: '1',
       },
     },
