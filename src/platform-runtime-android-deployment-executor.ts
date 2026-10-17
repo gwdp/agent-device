@@ -8,7 +8,9 @@ import { loadAndroidMechanics } from './platform-runtime-android-mechanics.ts';
 /** Android deployment adapter; native command construction remains package-owned. */
 export function createAndroidAppDeploymentExecutor(): AndroidAppDeploymentExecutor {
   return Object.freeze({
-    bundletoolJar: commandHostEnvironment().env.AGENT_DEVICE_BUNDLETOOL_JAR?.trim() || undefined,
+    get bundletoolJar() {
+      return commandHostEnvironment().env.AGENT_DEVICE_BUNDLETOOL_JAR?.trim() || undefined;
+    },
     withInvalidatedAppResolutionCache: async (device, operation) => {
       const { withAndroidAppResolutionCacheInvalidated } = await loadAndroidMechanics();
       return await withAndroidAppResolutionCacheInvalidated(device, operation);
