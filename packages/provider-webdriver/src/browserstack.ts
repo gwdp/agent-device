@@ -1,6 +1,5 @@
 import type { CloudArtifact, CloudArtifactsResult } from '@agent-device/contracts/observability';
 import type { ProviderProfileFieldDeclaration } from '@agent-device/contracts/provider-profile-fields';
-import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import { AppError } from '@agent-device/kernel/errors';
 import type { CloudWebDriverCapabilityOverrides } from './capabilities.ts';
 import type { CloudWebDriverUploadApp } from './runtime.ts';
@@ -172,7 +171,8 @@ export async function resolveBrowserStackAppReference(
   return await resolveHubAppReference({
     service: 'BrowserStack',
     app,
-    cwd: options.cwd ?? commandHostEnvironment().cwd,
+    cwd:
+      options.cwd ?? (await import('@agent-device/host-kit/command')).commandHostEnvironment().cwd,
     referenceLabel: 'a bs:// app id',
     parseReference: parseBrowserStackAppReference,
     uploadFile: async (appPath, signal) => await uploadBrowserStackApp(appPath, options, signal),

@@ -152,7 +152,7 @@
     "packages/remote/src/daemon-artifacts.ts#downloadRemoteArtifact": "sha256:f3ab09ce387577073ecc5bcd2528963e45f91b2c1e4cc57847c3e2732ccbb300",
     "packages/remote/src/daemon-artifacts.ts#isRemoteDaemon": "sha256:0f6a714c5f60ce4e8548d811b516d8b6241eca9f7e5414733732da395b8a00e7",
     "packages/remote/src/daemon-artifacts.ts#materializeRemoteArtifacts": "sha256:c3ea70cc9a218acfaa30f6c4ba55b80224c96aba10e4e9c7a17828fc851de77e",
-    "packages/remote/src/daemon-artifacts.ts#resolveMaterializedArtifactPath": "sha256:cad37beddeb03ba70bc92118a5e45f552edfc00feec789758e390d1ea4c7d879",
+    "packages/remote/src/daemon-artifacts.ts#resolveMaterializedArtifactPath": "sha256:ded243c73850884ba158a398459374e13bf019e5799f7a893ecfa3329a341291",
     "packages/remote/src/remote-request-diagnostics.ts#RemoteDaemonErrorPayload": "sha256:8fbcbcdf4bae7b66a08e465a72593794f36364759f18f1a814cd39dfdb76f309",
     "packages/remote/src/remote-request-diagnostics.ts#RemoteDiagnosticsEndpoint": "sha256:c1d5fe2fe90c425502cf8b7c87d6606374d6af65b4e9faf942a416f683930bdc",
     "packages/remote/src/remote-request-diagnostics.ts#buildRemoteRequestDiagnosticsUrl": "sha256:30a1a9bf0df24d3564a616699916a3bb4360c2b4d21c4ad0562fb0c1e738d0a9",
@@ -457,7 +457,7 @@
     {
       "declaration": "src/daemon-client/daemon-client-progress.ts#createInvalidDaemonResponseError",
       "digest": "sha256:807eb96ca26de118a8e678f2ec776d17c207db4eec86ff23cfaec9cd2476b60f",
-      "rationale": "The client names its request as DaemonWireRequest (packages/contracts/src/daemon-wire-request.ts, a narrowing of the listed kernel DaemonRequest) and its response as the kernel DaemonResponse, instead of the daemon package's DaemonRequest/DaemonResponse aliases, so the daemon package is no longer a client import. The declaration's serialized fields, method names and framing are unchanged; only the compile-time type names in its signature moved, so a peer on protocol 2 parses exactly what it did."
+      "rationale": "The client names its request as DaemonWireRequest (packages/contracts/src/daemon-wire-request.ts, a narrowing of the listed kernel DaemonRequest) and its response as the kernel DaemonResponse, instead of the daemon package's DaemonRequest/DaemonResponse aliases, so the daemon package is no longer a client import. The declaration's serialized fields, method names and framing are unchanged; only the compile-time type names in its signature moved, so a peer on protocol 2 parses exactly what it did. The relative-path fallback also reads the working directory from the command host instead of the process, which the client binds to the same directory, so the local path the client resolves is unchanged."
     },
     {
       "declaration": "src/daemon-client/daemon-client-progress.ts#shouldReadDaemonProgressStream",
@@ -476,7 +476,7 @@
     },
     {
       "declaration": "packages/remote/src/daemon-artifacts.ts#resolveMaterializedArtifactPath",
-      "digest": "sha256:cad37beddeb03ba70bc92118a5e45f552edfc00feec789758e390d1ea4c7d879",
+      "digest": "sha256:ded243c73850884ba158a398459374e13bf019e5799f7a893ecfa3329a341291",
       "rationale": "The client names its request as DaemonWireRequest (packages/contracts/src/daemon-wire-request.ts, a narrowing of the listed kernel DaemonRequest) and its response as the kernel DaemonResponse, instead of the daemon package's DaemonRequest/DaemonResponse aliases, so the daemon package is no longer a client import. The declaration's serialized fields, method names and framing are unchanged; only the compile-time type names in its signature moved, so a peer on protocol 2 parses exactly what it did."
     }
   ]

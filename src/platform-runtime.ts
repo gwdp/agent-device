@@ -1,4 +1,3 @@
-import { commandHostEnvironment } from '@agent-device/host-kit/command';
 import type { EnvMap } from '@agent-device/kernel/source-value';
 import type {
   ProviderDeviceInventorySource,
@@ -105,7 +104,9 @@ export async function createPlatformDeviceInventoryGateways(
   provider?: ProviderDeviceInventorySource,
 ): Promise<ComposedDeviceInventoryGateways> {
   return await attachAppleInstalledAppProbe({
-    registry: createPlatformModuleRegistryForHost(commandHostEnvironment().env),
+    registry: createPlatformModuleRegistryForHost(
+      (await import('@agent-device/host-kit/command')).commandHostEnvironment().env,
+    ),
     loadHost: async () => {
       const { createDeviceInventoryHost } = await import('./platform-runtime-host.ts');
       return createDeviceInventoryHost();
