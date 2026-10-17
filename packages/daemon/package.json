@@ -224,10 +224,6 @@
       "types": "./src/core/session-capture-binding.ts",
       "default": "./src/core/session-capture-binding.ts"
     },
-    "./testing/session-observability/__tests__/*": {
-      "types": "./src/sessions/session-observability/__tests__/*.ts",
-      "default": "./src/sessions/session-observability/__tests__/*.ts"
-    },
     "./testing/session-snapshot": {
       "types": "./src/execution/session-snapshot.ts",
       "default": "./src/execution/session-snapshot.ts"
